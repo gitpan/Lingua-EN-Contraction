@@ -183,8 +183,6 @@ A very simple, humble little module that adds apostrophes to your sentances for 
 don't like the way it contracts things then you'll have to change the code a bit.  It'll preserve capitalization, so if 
 you feed it things like "DO NOT PANIC", you'll get "DON'T PANIC" out the other end.  
 
-=back
-
 =head1 BUGS
 
 =head1 TODO
@@ -192,20 +190,6 @@ you feed it things like "DO NOT PANIC", you'll get "DON'T PANIC" out the other e
 =head1 AUTHOR
 
 Russ Graham, russgraham@gmail.com
-
-=head1 SEE ALSO
-
-=over
-
-=item
-
-L<Lingua::IT::Conjugate>
-
-=item
-
-L<Lingua::PT::Conjugate>
-
-=back
 
 =cut
 
