@@ -23,15 +23,34 @@ use vars qw(
 );
 
 
-$VERSION = '0.1';
+$VERSION = '0.102';
+
+our @modal = 	qw(might must do does did should could can);
+our @pronoun = 	qw(I you we he she it they);
+our @that = 	qw(there this that);
+our @other = 	qw(who what when where why how);
+our @verbs =    qw(are is am was were will would have has had);
+
+our $modal_re =   re_ify_list(@modal);
+our $pronoun_re = re_ify_list(@pronoun);
+our $that_re    = re_ify_list(@that);
+our $other_re =   re_ify_list(@other);
+our $verbs_re =   re_ify_list(@verbs);
 
 
-our $modal_re =   re_ify_list(qw(might must do does did should could can));
-our $pronoun_re = re_ify_list(qw(I you we he she it they));
-our $that_re    = re_ify_list(qw(there this that));
-our $other_re =   re_ify_list(qw(who what when where why how));
+our %list = ( 	     am   => ['I'], 
+	             had  => [@pronoun, @that, @other],
+	 	     would=> [@pronoun, @that, @other],
+		     will => [@pronoun, @that, @other],
+		     are  => [@pronoun, @other],
+		     is   => [@pronoun, @that, @other],
+		     has  => [@pronoun, @that, @other],
+		     that => [@pronoun, @that, @other],
+		     have => [@pronoun, @that, @other]
+		   );
+		
 
-our $verbs_re =   re_ify_list(qw(are is am was were will would have has had));
+
 
 sub contraction {
 
@@ -54,14 +73,18 @@ sub contract_n_t {
 
 	my $phrase = shift;
 
+	$phrase =~ s/(can)(not)/$1 $2/ig;
+
 	my $new_phrase = $phrase;
+
 	
-	while ($phrase =~ /(\b($modal_re|$verbs_re) ($pronoun_re )?(not)\b)/ig) {
+	
+	while ($phrase =~ /(\b($modal_re|$verbs_re) ?($pronoun_re )?(not)\b)/ig) {
 		my $orig_phrase = $1;
 		my $_phrase = $1;
 		
 	
-		if ( $_phrase =~ /\b($modal_re|$verbs_re) (not)\b/i  ) {
+		if ( $_phrase =~ /\b($modal_re|$verbs_re) ?(not)\b/i  ) {
 			my $m = $1;
 			my $n = $2;
 			if (my $m2 = N_T($m, $n)) {
@@ -85,9 +108,7 @@ sub contract_n_t {
 sub contract_other {
 	my $phrase = shift;
 
-	my $phrase_start_pos = 0;
-	while ($phrase =~ /\b(cannot|let us)/ig) {
-		$phrase =~ s/\b(can)no(t)/$1'$2/i;
+	while ($phrase =~ /\b(let us)/ig) {
 		$phrase =~ s/\b(let) u(s)/$1'$2/i;
 	}
 
@@ -96,24 +117,20 @@ sub contract_other {
 		my $orig_phrase = $1;
 		my $_phrase = $1;
 		my $w1 = $2;
+		my $w2 = $3;
+		my $w3 = $4;
 
 		# don't form contractions following modal verbs:
 		# nobody ever says "could I've been walking?", they say "could I have been walking?".
 		next if $w1 =~ /$modal_re/;
 
-		$_phrase =~ s/\b(I) a(m)\b/$1'$2/i;
+		my $ctrct_after = $list{lc($w3)} or next;
+		next unless match_any($w2, @$ctrct_after);
+		my $w3b = $w3;
+		$w3b =~ s/.*(m|d|ll|re|s|t|ve)/$1/i; 
+		next if $w3b eq $w3;		
 
-		$_phrase =~ s/\b($pronoun_re|$other_re|$that_re) ha(d)\b/$1'$2/i;
-		$_phrase =~ s/\b($pronoun_re|$other_re|$that_re) woul(d)\b/$1'$2/i;
-
-		$_phrase =~ s/\b($pronoun_re|$other_re|$that_re) wi(ll)\b/$1'$2/i;
-
-		$_phrase =~ s/\b($pronoun_re|$other_re) a(re)\b/$1'$2/i;
-
-		$_phrase =~ s/\b($pronoun_re|$other_re|$that_re) i(s)\b/$1'$2/i;
-		$_phrase =~ s/\b($pronoun_re|$other_re|$that_re) ha(s)\b/$1'$2/i;
-
-		$_phrase =~ s/\b($pronoun_re|$other_re|$modal_re|$that_re) ha(ve)\b/$1'$2/i;
+		$_phrase =~ s/($w2) ($w3)/$w2'$w3b/;
 
 		next if $_phrase eq $orig_phrase;
 		$phrase =~ s/$orig_phrase/$_phrase/;
@@ -121,8 +138,16 @@ sub contract_other {
 	return $phrase;
 }
 
+
+
+sub match_any {
+	my $a = shift;
+	my @b = @_;
+	for (@b) { return 1 if $a =~ /\b$_\b/i ; }
+	return undef;
+}
+
 sub N_T {
-    use locale;
 
     #add contracted negation to modal verbs:
     my $modal       = shift;
@@ -133,21 +158,27 @@ sub N_T {
 	# but change case for "Not" -> "n't"
 
     my $n_t = 	$not =~ /N[oO]T/ ? "N'T":
-		$not =~ /n[oO]T/ ? "n'T":
 		 		   "n't";
-    
+
     if (lc($modal) eq 'am') {return "$modal $not"; }
 
 	# cases where simply adding "n't" doesn't work:
 	# will->won't, can->can't, shall->shan't
 	# trying to preserve original case...
 
-  	   $modal =~ s/((?i)w)I(?i)LL/$1O/;
-  	   $modal =~ s/((?i)w)i(?i)ll/$1o/;
- 	   $modal =~ s/((?i)c)A(?i)N/$1A/;
- 	   $modal =~ s/((?i)c)a(?i)n/$1a/;
- 	   $modal =~ s/(SHA)LL/$1/i;
+    elsif (lc($modal) eq 'will') {
+		$modal =~ s/ll//i;
+		$modal =~ tr/Ii/Oo/;	  
+	  }
 
+    elsif (lc($modal) eq 'can') {
+		$modal =~ s/n//i;
+	  }
+
+    elsif (lc($modal) eq 'shall') {
+		$modal =~ s/ll//i;
+	  }
+		
     my $answer = $modal . $n_t;
 
     return    $modal eq lc($modal) ? lc($answer):
