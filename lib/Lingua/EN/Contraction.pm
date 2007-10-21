@@ -23,22 +23,22 @@ use vars qw(
 );
 
 
-$VERSION = '0.102';
+$VERSION = '0.103';
 
-our @modal = 	qw(might must do does did should could can);
-our @pronoun = 	qw(I you we he she it they);
-our @that = 	qw(there this that);
-our @other = 	qw(who what when where why how);
-our @verbs =    qw(are is am was were will would have has had);
+my @modal = 	qw(might must do does did should could can);
+my @pronoun = 	qw(I you we he she it they);
+my @that = 	qw(there this that);
+my @other = 	qw(who what when where why how);
+my @verbs =    qw(are is am was were will would have has had);
 
-our $modal_re =   re_ify_list(@modal);
-our $pronoun_re = re_ify_list(@pronoun);
-our $that_re    = re_ify_list(@that);
-our $other_re =   re_ify_list(@other);
-our $verbs_re =   re_ify_list(@verbs);
+my $modal_re =   re_ify_list(@modal);
+my $pronoun_re = re_ify_list(@pronoun);
+my $that_re    = re_ify_list(@that);
+my $other_re =   re_ify_list(@other);
+my $verbs_re =   re_ify_list(@verbs);
 
 
-our %list = ( 	     am   => ['I'], 
+my %list = ( 	     am   => ['I'], 
 	             had  => [@pronoun, @that, @other],
 	 	     would=> [@pronoun, @that, @other],
 		     will => [@pronoun, @that, @other],
@@ -127,7 +127,7 @@ sub contract_other {
 		my $ctrct_after = $list{lc($w3)} or next;
 		next unless match_any($w2, @$ctrct_after);
 		my $w3b = $w3;
-		$w3b =~ s/.*(m|d|ll|re|s|t|ve)/$1/i; 
+		$w3b =~ s/.*(m|d|ll|re|s|t|ve)$/$1/i; 
 		next if $w3b eq $w3;		
 
 		$_phrase =~ s/($w2) ($w3)/$w2'$w3b/;
