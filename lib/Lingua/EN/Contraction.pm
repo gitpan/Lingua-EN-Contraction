@@ -15,7 +15,7 @@ require Exporter;
 
 use warnings;
 use strict;
-use diagnostics;
+#use diagnostics;
 
 
 use vars qw(
@@ -23,7 +23,7 @@ use vars qw(
 );
 
 
-$VERSION = '0.103';
+$VERSION = '0.104';
 
 my @modal = 	qw(might must do does did should could can);
 my @pronoun = 	qw(I you we he she it they);
